@@ -1,13 +1,13 @@
 ---
 name: easy-query-expert
-description: Expert guidance for Easy-Query ORM (Java), covering type-safe proxy queries, implicit joins, and tracking updates.
+description: Guidance for Easy-Query ORM (Java), covering type-safe proxy queries, implicit joins, and tracking updates.
 version: 1.0.0
 author: cc123hh
 tags: [java, orm, database, easy-query, sql, backend, proxy, type-safe, lambda]
 repository: https://github.com/dromara/easy-query
 ---
 
-# Easy-Query ORM Expert
+# Easy-Query ORM
 
 Easy-Query is a Java ORM framework based on APT proxy pattern, providing type-safe Lambda query syntax. This skill covers core concepts, common operations, relationship mapping, and advanced features.
 
