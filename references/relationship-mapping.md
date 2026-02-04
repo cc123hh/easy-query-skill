@@ -1,68 +1,68 @@
-# @Navigate 关系映射完整配置
+# @Navigate Relationship Mapping Complete Configuration
 
-`@Navigate` 注解用于定义实体间的关联关系，是 Easy-Query 隐式查询特性的基础。
+The `@Navigate` annotation is used to define relationships between entities, serving as the foundation for Easy-Query's implicit query features.
 
-## 注解属性详解
+## Annotation Properties Explained
 
-### 基本属性
+### Basic Properties
 
 ```java
 @Navigate(
-    value = RelationTypeEnum.OneToMany,    // 关系类型（必填）
-    selfProperty = "id",                    // 当前实体关联属性（必填）
-    targetProperty = "topicId",             // 目标实体关联属性（必填）
-    mappingClass = TopicBlog.class,         // 多对多中间表
-    subQueryToGroupJoin = false,            // 子查询转 group join
-    required = false                        // 是否必须存在
+    value = RelationTypeEnum.OneToMany,    // Relationship type (required)
+    selfProperty = "id",                    // Current entity relation property (required)
+    targetProperty = "topicId",             // Target entity relation property (required)
+    mappingClass = TopicBlog.class,         // Many-to-many intermediate table
+    subQueryToGroupJoin = false,            // Subquery to group join
+    required = false                        // Whether must exist
 )
 private List<BlogEntity> blogs;
 ```
 
-### value - 关系类型
+### value - Relationship Type
 
-| 类型 | 说明 | 示例 |
-|------|------|------|
-| `OneToOne` | 一对一 | 用户 ↔ 个人资料 |
-| `OneToMany` | 一对多 | 主题 → 博客列表 |
-| `ManyToOne` | 多对一 | 博客 → 所属主题 |
-| `ManyToMany` | 多对多 | 学生 ↔ 课程 |
+| Type | Description | Example |
+|------|-------------|---------|
+| `OneToOne` | One-to-One | User ↔ Profile |
+| `OneToMany` | One-to-Many | Topic → Blog list |
+| `ManyToOne` | Many-to-One | Blog →所属 Topic |
+| `ManyToMany` | Many-to-Many | Student ↔ Course |
 
-### selfProperty - 当前实体属性
+### selfProperty - Current Entity Property
 
-当前实体中用于关联的属性名：
+The property name in the current entity used for association:
 
 ```java
 @Navigate(value = RelationTypeEnum.OneToMany,
-          selfProperty = "id")  // 使用当前实体的 id 字段
+          selfProperty = "id")  // Use current entity's id field
 private List<BlogEntity> blogs;
 ```
 
-### targetProperty - 目标实体属性
+### targetProperty - Target Entity Property
 
-目标实体中用于关联的属性名：
+The property name in the target entity used for association:
 
 ```java
 @Navigate(value = RelationTypeEnum.OneToMany,
           selfProperty = "id",
-          targetProperty = "topicId")  // 关联到 BlogEntity.topicId
+          targetProperty = "topicId")  // Associate to BlogEntity.topicId
 private List<BlogEntity> blogs;
 ```
 
-### mappingClass - 多对多中间表
+### mappingClass - Many-to-Many Intermediate Table
 
-仅用于 `ManyToMany` 关系，指定中间表实体类：
+Only used for `ManyToMany` relationships, specifying the intermediate table entity class:
 
 ```java
-// Student 实体
+// Student entity
 @Navigate(
     value = RelationTypeEnum.ManyToMany,
     selfProperty = "id",
     targetProperty = "studentId",
-    mappingClass = StudentCourse.class  // 中间表
+    mappingClass = StudentCourse.class  // Intermediate table
 )
 private List<Course> courses;
 
-// Course 实体
+// Course entity
 @Navigate(
     value = RelationTypeEnum.ManyToMany,
     selfProperty = "id",
@@ -71,7 +71,7 @@ private List<Course> courses;
 )
 private List<Student> students;
 
-// 中间表实体
+// Intermediate table entity
 @Table("t_student_course")
 @EntityProxy
 public class StudentCourse {
@@ -82,30 +82,30 @@ public class StudentCourse {
 }
 ```
 
-### subQueryToGroupJoin - 子查询转分组
+### subQueryToGroupJoin - Subquery to Grouping
 
-当设置为 `true` 时，多个子查询会合并为单个 GROUP BY 查询：
+When set to `true`, multiple subqueries are merged into a single GROUP BY query:
 
 ```java
 @Navigate(value = RelationTypeEnum.OneToMany,
           selfProperty = "id",
           targetProperty = "companyId",
-          subQueryToGroupJoin = true)  // 启用优化
+          subQueryToGroupJoin = true)  // Enable optimization
 private List<SysUser> users;
 ```
 
-**适用场景**：
-- 同一集合有多个查询条件
-- 大数据量场景（>1000 条记录）
+**Applicable Scenarios**:
+- Multiple query conditions on the same collection
+- Large data volume scenarios (>1000 records)
 
-**性能对比**：
+**Performance Comparison**:
 ```sql
--- 未启用（多个子查询）
+-- Not enabled (multiple subqueries)
 SELECT * FROM t_company t
 WHERE EXISTS (SELECT 1 FROM t_sys_user WHERE company_id = t.id AND age > 18)
   AND EXISTS (SELECT 1 FROM t_sys_user WHERE company_id = t.id AND age < 60)
 
--- 启用（单个 GROUP BY）
+-- Enabled (single GROUP BY)
 SELECT * FROM t_company t
 LEFT JOIN (
     SELECT company_id, COUNT(*) AS cnt
@@ -116,29 +116,29 @@ LEFT JOIN (
 WHERE t1.cnt > 0
 ```
 
-### required - 是否必须存在
+### required - Must Exist
 
-控制关联关系是否必须存在，影响生成的 JOIN 类型：
+Controls whether the relationship must exist, affecting the generated JOIN type:
 
 ```java
 @Navigate(value = RelationTypeEnum.ManyToOne,
           selfProperty = "topicId",
           targetProperty = "id",
-          required = true)  // 必须存在 → INNER JOIN
+          required = true)  // Must exist → INNER JOIN
 private Topic topic;
 ```
 
-| required 值 | JOIN 类型 | 说明 |
-|------------|----------|------|
-| `false`（默认） | LEFT JOIN | 允许关联对象为空 |
-| `true` | INNER JOIN | 关联对象必须存在 |
+| required Value | JOIN Type | Description |
+|---------------|-----------|-------------|
+| `false` (default) | LEFT JOIN | Allow related object to be null |
+| `true` | INNER JOIN | Related object must exist |
 
-## 关系类型配置示例
+## Relationship Type Configuration Examples
 
-### 一对一（OneToOne）
+### One-to-One (OneToOne)
 
 ```java
-// 用户实体
+// User entity
 @Table("t_sys_user")
 @EntityProxy
 public class SysUser {
@@ -152,13 +152,13 @@ public class SysUser {
     private UserProfile profile;
 }
 
-// 用户资料实体
+// User profile entity
 @Table("t_user_profile")
 @EntityProxy
 public class UserProfile {
     @Column(primaryKey = true)
     private String id;
-    private String userId;  // 关联到 SysUser.id
+    private String userId;  // Associates to SysUser.id
     private String phone;
     private String address;
 
@@ -169,10 +169,10 @@ public class UserProfile {
 }
 ```
 
-### 一对多（OneToMany）
+### One-to-Many (OneToMany)
 
 ```java
-// 主题实体
+// Topic entity
 @Table("t_topic")
 @EntityProxy
 public class Topic {
@@ -186,13 +186,13 @@ public class Topic {
     private List<BlogEntity> blogs;
 }
 
-// 博客实体
+// Blog entity
 @Table("t_blog")
 @EntityProxy
 public class BlogEntity {
     @Column(primaryKey = true)
     private String id;
-    private String topicId;  // 关联到 Topic.id
+    private String topicId;  // Associates to Topic.id
     private String title;
 
     @Navigate(value = RelationTypeEnum.ManyToOne,
@@ -202,10 +202,10 @@ public class BlogEntity {
 }
 ```
 
-### 多对多（ManyToMany）
+### Many-to-Many (ManyToMany)
 
 ```java
-// 学生实体
+// Student entity
 @Table("t_student")
 @EntityProxy
 public class Student {
@@ -222,7 +222,7 @@ public class Student {
     private List<Course> courses;
 }
 
-// 课程实体
+// Course entity
 @Table("t_course")
 @EntityProxy
 public class Course {
@@ -239,22 +239,22 @@ public class Course {
     private List<Student> students;
 }
 
-// 中间表实体
+// Intermediate table entity
 @Table("t_student_course")
 @EntityProxy
 public class StudentCourse {
     @Column(primaryKey = true)
     private String id;
-    private String studentId;  // 关联到 Student.id
-    private String courseId;   // 关联到 Course.id
+    private String studentId;  // Associates to Student.id
+    private String courseId;   // Associates to Course.id
 }
 ```
 
-## 高级配置
+## Advanced Configuration
 
-### 排序配置
+### Sorting Configuration
 
-在 `@Navigate` 中配置关联结果的默认排序：
+Configure default sorting for related results in `@Navigate`:
 
 ```java
 @Navigate(
@@ -269,25 +269,25 @@ public class StudentCourse {
 private List<BlogEntity> blogs;
 ```
 
-### 级联查询配置
+### Cascade Query Configuration
 
-配置关联对象是否自动加载：
+Configure whether related objects are automatically loaded:
 
 ```java
 @Navigate(
     value = RelationTypeEnum.ManyToOne,
     selfProperty = "topicId",
     targetProperty = "id",
-    extraSqlArg = "lazy"  // 延迟加载
+    extraSqlArg = "lazy"  // Lazy loading
 )
 private Topic topic;
 ```
 
-## 常见问题
+## Common Issues
 
-### 循环引用问题
+### Circular Reference Problem
 
-双向关联可能导致序列化循环：
+Bidirectional relationships may cause serialization loops:
 
 ```java
 // Topic.java
@@ -299,36 +299,36 @@ private List<BlogEntity> blogs;
 private Topic topic;
 ```
 
-**解决方案**：
-1. 查询时使用 `.select()` 指定返回字段
-2. 在 JSON 序列化注解中忽略循环引用
-3. 使用 `@JsonIgnore` 注解
+**Solutions**:
+1. Use `.select()` to specify return fields when querying
+2. Ignore circular references in JSON serialization annotations
+3. Use `@JsonIgnore` annotation
 
-### 性能优化建议
+### Performance Optimization Recommendations
 
-1. **一对一/多对一**：使用隐式 Join，性能良好
-2. **一对多/多对多**：
-   - 小数据量（<100）：直接使用隐式子查询
-   - 大数据量（>1000）：启用 `subQueryToGroupJoin`
-3. **多对多查询**：考虑在中间表添加额外字段
+1. **One-to-One/Many-to-One**: Use implicit Join, good performance
+2. **One-to-Many/Many-to-Many**:
+   - Small data volume (<100): Directly use implicit subquery
+   - Large data volume (>1000): Enable `subQueryToGroupJoin`
+3. **Many-to-Many queries**: Consider adding extra fields to intermediate table
 
-### 关联查询最佳实践
+### Relationship Query Best Practices
 
 ```java
-// ✅ 推荐：使用隐式查询
+// ✅ Recommended: Use implicit query
 easyEntityQuery.queryable(Company.class)
-    .where(c -> c.users().any(u -> u.name().like("张三")))
+    .where(c -> c.users().any(u -> u.name().like("Zhang San")))
     .toList();
 
-// ⚠️ 可用：显式 JOIN（复杂场景）
+// ⚠️ Available: Explicit JOIN (complex scenarios)
 easyEntityQuery.queryable(Company.class)
     .leftJoin(SysUser.class, (c, u) -> c.id().eq(u.companyId()))
-    .where((c, u) -> u.name().like("张三"))
+    .where((c, u) -> u.name().like("Zhang San"))
     .toList();
 
-// ❌ 避免：应用层循环（N+1 问题）
+// ❌ Avoid: Application layer loop (N+1 problem)
 List<Company> companies = easyEntityQuery.queryable(Company.class).toList();
 for (Company c : companies) {
-    List<SysUser> users = c.getUsers();  // 每次循环都查询一次
+    List<SysUser> users = c.getUsers();  // Queries once per loop
 }
 ```

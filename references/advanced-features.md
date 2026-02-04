@@ -1,20 +1,20 @@
-# Easy-Query 五大隐式特性详解
+# Easy-Query Five Implicit Features Explained
 
-Easy-Query 的核心竞争力在于其五大隐式特性，这些特性可以自动处理复杂的关系查询，大幅简化开发工作。
+Easy-Query's core competitive advantage lies in its five implicit features, which can automatically handle complex relationship queries and significantly simplify development work.
 
-## 1. 隐式 Join（Implicit Join）
+## 1. Implicit Join
 
-自动处理 OneToOne 和 ManyToOne 关系，无需显式编写 JOIN 语句。
+Automatically handles OneToOne and ManyToOne relationships without explicitly writing JOIN statements.
 
-### 使用场景
+### Usage Scenarios
 
-当查询对象通过导航属性访问关联对象时，自动生成 LEFT JOIN：
+When querying objects access related objects through navigation properties, automatically generates LEFT JOIN:
 
 ```java
-// 自动生成 LEFT JOIN
+// Automatically generates LEFT JOIN
 List<SysUser> users = easyEntityQuery.queryable(SysUser.class)
     .where(user -> {
-        user.company().name().like("阿里");
+        user.company().name().like("Alibaba");
         user.company().registerMoney().gt(new BigDecimal("1000000"));
     })
     .orderBy(user -> {
@@ -23,89 +23,89 @@ List<SysUser> users = easyEntityQuery.queryable(SysUser.class)
     })
     .toList();
 
--- 生成的 SQL
+-- Generated SQL
 SELECT t.*
 FROM t_sys_user t
 LEFT JOIN t_company t1 ON t.company_id = t1.id
-WHERE t1.name LIKE '%阿里%'
+WHERE t1.name LIKE '%Alibaba%'
   AND t1.register_money > 1000000
 ORDER BY t1.register_money DESC, t.birthday ASC
 ```
 
-### 优势
+### Advantages
 
-- 简化查询语法，无需手写 JOIN 条件
-- 类型安全，编译时检查
-- 支持多级导航：`user.company().department().name()`
+- Simplifies query syntax, no need to manually write JOIN conditions
+- Type-safe, compile-time checking
+- Supports multi-level navigation: `user.company().department().name()`
 
-### 注意事项
+### Notes
 
-- 隐式 Join 只支持 OneToOne 和 ManyToOne 关系
-- OneToMany 和 ManyToMany 需要使用隐式子查询
+- Implicit Join only supports OneToOne and ManyToOne relationships
+- OneToMany and ManyToMany require implicit subquery
 
-## 2. 隐式子查询（Implicit Subquery）
+## 2. Implicit Subquery
 
-自动处理 OneToMany 和 ManyToMany 关系，生成 EXISTS 或 IN 子查询。
+Automatically handles OneToMany and ManyToMany relationships, generating EXISTS or IN subqueries.
 
-### 使用场景
+### Usage Scenarios
 
 ```java
-// 自动生成 EXISTS 子查询
+// Automatically generates EXISTS subquery
 List<Company> companies = easyEntityQuery.queryable(Company.class)
     .where(company -> {
-        company.users().any(u -> u.name().like("小明"));
-        company.users().where(u -> u.name().like("小明"))
+        company.users().any(u -> u.name().like("Xiaoming"));
+        company.users().where(u -> u.name().like("Xiaoming"))
             .max(u -> u.birthday()).gt(LocalDateTime.of(2000, 1, 1, 0, 0, 0));
     })
     .toList();
 
--- 生成的 SQL
+-- Generated SQL
 SELECT t.*
 FROM t_company t
 WHERE EXISTS (
     SELECT 1
     FROM t_sys_user t1
     WHERE t1.company_id = t.id
-      AND t1.name LIKE '%小明%'
+      AND t1.name LIKE '%Xiaoming%'
 )
 AND (
     SELECT MAX(t1.birthday)
     FROM t_sys_user t1
     WHERE t1.company_id = t.id
-      AND t1.name LIKE '%小明%'
+      AND t1.name LIKE '%Xiaoming%'
 ) > '2000-01-01 00:00:00'
 ```
 
-### 支持的方法
+### Supported Methods
 
-- `.any()` - 存在任意满足条件的记录（EXISTS）
-- `.all()` - 所有记录都满足条件
-- `.where(condition).max/min/avg/sum/count()` - 聚合函数
+- `.any()` - Exists any record matching condition (EXISTS)
+- `.all()` - All records satisfy condition
+- `.where(condition).max/min/avg/sum/count()` - Aggregate functions
 
-### 优势
+### Advantages
 
-- 自动生成优化的子查询
-- 支持复杂的聚合条件
-- 避免 N+1 查询问题
+- Automatically generates optimized subqueries
+- Supports complex aggregate conditions
+- Avoids N+1 query problems
 
-## 3. 隐式分组（Implicit Grouping）
+## 3. Implicit Grouping
 
-将多个 OneToMany/ManyToMany 子查询合并为单个分组查询，提升性能。
+Merges multiple OneToMany/ManyToMany subqueries into a single group query, improving performance.
 
-### 使用场景
+### Usage Scenarios
 
 ```java
-// 多个子查询会被合并为一个 GROUP BY 查询
+// Multiple subqueries will be merged into one GROUP BY query
 List<Company> companies = easyEntityQuery.queryable(Company.class)
     .subQueryToGroupJoin(company -> company.users())
     .where(company -> {
-        company.users().any(u -> u.name().like("小明"));
-        company.users().where(u -> u.name().like("小明"))
+        company.users().any(u -> u.name().like("Xiaoming"));
+        company.users().where(u -> u.name().like("Xiaoming"))
             .max(u -> u.birthday()).gt(LocalDateTime.now());
     })
     .toList();
 
--- 生成的 SQL（优化后）
+-- Generated SQL (optimized)
 SELECT t.*
 FROM t_company t
 LEFT JOIN (
@@ -113,50 +113,50 @@ LEFT JOIN (
            COUNT(*) AS user_count,
            MAX(birthday) AS max_birthday
     FROM t_sys_user
-    WHERE name LIKE '%小明%'
+    WHERE name LIKE '%Xiaoming%'
     GROUP BY company_id
 ) t1 ON t.id = t1.company_id
 WHERE t1.user_count > 0
   AND t1.max_birthday > '2024-01-01 00:00:00'
 ```
 
-### 触发条件
+### Trigger Conditions
 
-通过 `.subQueryToGroupJoin()` 方法显式启用，或在 `@Navigate` 注解中配置：
+Explicitly enable via `.subQueryToGroupJoin()` method, or configure in `@Navigate` annotation:
 ```java
 @Navigate(value = RelationTypeEnum.OneToMany,
           subQueryToGroupJoin = true)
 private List<SysUser> users;
 ```
 
-### 优势
+### Advantages
 
-- 减少子查询数量
-- 降低数据库负载
-- 提升大数据量场景性能
+- Reduces number of subqueries
+- Lowers database load
+- Improves performance in large data volume scenarios
 
-### 适用场景
+### Applicable Scenarios
 
-- 同一个集合属性有多个查询条件
-- 大数据量场景（>1000 条关联记录）
+- Multiple query conditions on the same collection property
+- Large data volume scenarios (>1000 related records)
 
-## 4. 隐式分区分组（Implicit Partition Grouping）
+## 4. Implicit Partition Grouping
 
-支持对集合进行 First/Nth/ElementAt 等操作，自动生成分区窗口函数。
+Supports operations like First/Nth/ElementAt on collections, automatically generating partition window functions.
 
-### 使用场景
+### Usage Scenarios
 
 ```java
-// 获取每个公司生日最大的用户
+// Get the user with the maximum birthday in each company
 List<Company> companies = easyEntityQuery.queryable(Company.class)
     .where(company -> {
-        company.users().orderBy(u -> u.birthday().desc()).first().name().eq("小明");
+        company.users().orderBy(u -> u.birthday().desc()).first().name().eq("Xiaoming");
         company.users().orderBy(u -> u.birthday().desc()).element(0)
             .birthday().lt(LocalDateTime.now());
     })
     .toList();
 
--- 生成的 SQL（使用窗口函数）
+-- Generated SQL (using window function)
 SELECT t.*
 FROM t_company t
 LEFT JOIN (
@@ -164,64 +164,64 @@ LEFT JOIN (
            ROW_NUMBER() OVER (PARTITION BY t1.company_id ORDER BY t1.birthday DESC) AS rn
     FROM t_sys_user t1
 ) t2 ON t.id = t2.company_id AND t2.rn = 1
-WHERE t2.name = '小明'
+WHERE t2.name = 'Xiaoming'
   AND t2.birthday < '2024-01-01 00:00:00'
 ```
 
-### 支持的方法
+### Supported Methods
 
-- `.first()` - 第一个元素（ROW_NUMBER() = 1）
-- `.element(index)` - 指定索引的元素
-- `.last()` - 最后一个元素
+- `.first()` - First element (ROW_NUMBER() = 1)
+- `.element(index)` - Element at specified index
+- `.last()` - Last element
 
-### 数据库兼容性
+### Database Compatibility
 
-| 数据库 | 窗口函数支持 | 备注 |
-|--------|------------|------|
-| MySQL 8.0+ | ✅ | 完整支持 |
-| PostgreSQL | ✅ | 完整支持 |
-| Oracle | ✅ | 完整支持 |
-| SQL Server | ✅ | 完整支持 |
-| MySQL 5.7 | ❌ | 使用子查询模拟 |
+| Database | Window Function Support | Notes |
+|----------|------------------------|-------|
+| MySQL 8.0+ | ✅ | Full support |
+| PostgreSQL | ✅ | Full support |
+| Oracle | ✅ | Full support |
+| SQL Server | ✅ | Full support |
+| MySQL 5.7 | ❌ | Simulated with subquery |
 
-### 优势
+### Advantages
 
-- 简化"取每组第一条/第N条"的查询
-- 自动使用最优的窗口函数
-- 避免应用层循环处理
+- Simplifies "get first/Nth per group" queries
+- Automatically uses optimal window functions
+- Avoids application-level loop processing
 
-## 5. 隐式 CASE WHEN 表达式
+## 5. Implicit CASE WHEN Expression
 
-通过 `.filter()` 方法实现条件聚合，自动生成 CASE WHEN 表达式。
+Implements conditional aggregation through `.filter()` method, automatically generating CASE WHEN expressions.
 
-### 使用场景
+### Usage Scenarios
 
 ```java
-// 统计各地区用户数量和平均年龄
+// Count users and average age by region
 List<Draft3<String, Long, BigDecimal>> result = easyEntityQuery.queryable(SysUser.class)
     .where(user -> user.birthday().lt(LocalDateTime.now()))
     .select(user -> Select.DRAFT.of(
         user.address(),
-        user.id().count().filter(() -> user.address().eq("杭州")),
-        user.id().count().filter(() -> user.address().eq("北京")),
-        user.age().avg().filter(() -> user.address().eq("北京"))
+        user.id().count().filter(() -> user.address().eq("Hangzhou")),
+        user.id().count().filter(() -> user.address().eq("Beijing")),
+        user.age().avg().filter(() -> user.address().eq("Beijing"))
     ))
     .toList();
 
--- 生成的 SQL
+-- Generated SQL
 SELECT
     t.address,
-    COUNT(CASE WHEN t.address = '杭州' THEN 1 END) AS value2,
-    COUNT(CASE WHEN t.address = '北京' THEN 1 END) AS value3,
-    AVG(CASE WHEN t.address = '北京' THEN t.age END) AS value4
+    COUNT(CASE WHEN t.address = 'Hangzhou' THEN 1 END) AS value2,
+    COUNT(CASE WHEN t.address = 'Beijing' THEN 1 END) AS value3,
+    AVG(CASE WHEN t.address = 'Beijing' THEN t.age END) AS value4
 FROM t_sys_user t
 WHERE t.birthday < '2024-01-01 00:00:00'
 ```
 
-### 语法模式
+### Syntax Pattern
 
 ```java
-// 聚合函数 + filter()
+// Aggregate function + filter()
 property.count().filter(() -> condition)
 property.sum().filter(() -> condition)
 property.avg().filter(() -> condition)
@@ -229,31 +229,31 @@ property.max().filter(() -> condition)
 property.min().filter(() -> condition)
 ```
 
-### 应用场景
+### Application Scenarios
 
-- 数据统计和报表
-- 条件分组统计
-- 动态指标计算
+- Data statistics and reports
+- Conditional group statistics
+- Dynamic metric calculation
 
-### 优势
+### Advantages
 
-- 简化 CASE WHEN 表达式编写
-- 类型安全的条件表达式
-- 支持所有聚合函数
+- Simplifies CASE WHEN expression writing
+- Type-safe conditional expressions
+- Supports all aggregate functions
 
-## 性能对比
+## Performance Comparison
 
-| 场景 | 传统 SQL | 隐式特性 | 性能提升 |
-|------|---------|---------|---------|
-| 关联查询 | 手写 LEFT JOIN | 隐式 Join | 开发效率 ⬆️ |
-| 集合过滤 | EXISTS 子查询 | 隐式子查询 | SQL 优化 ⬆️ |
-| 多条件集合查询 | 多个子查询 | 隐式分组 | 查询性能 ⬆️⬆️ |
-| 分组取首条 | 窗口函数 | 隐式分区分组 | 代码简化 ⬆️ |
-| 条件聚合 | CASE WHEN | 隐式 CASE WHEN | 可读性 ⬆️ |
+| Scenario | Traditional SQL | Implicit Feature | Performance Improvement |
+|----------|----------------|------------------|------------------------|
+| Relation query | Manual LEFT JOIN | Implicit Join | Development efficiency ⬆️ |
+| Collection filter | EXISTS subquery | Implicit subquery | SQL optimization ⬆️ |
+| Multi-condition collection query | Multiple subqueries | Implicit grouping | Query performance ⬆️⬆️ |
+| Group first record | Window function | Implicit partition grouping | Code simplification ⬆️ |
+| Conditional aggregation | CASE WHEN | Implicit CASE WHEN | Readability ⬆️ |
 
-## 最佳实践
+## Best Practices
 
-1. **优先使用隐式特性**：减少手写 SQL，提高开发效率
-2. **大数据量使用隐式分组**：避免多个子查询
-3. **理解生成的 SQL**：通过日志检查 SQL 正确性
-4. **合理配置 @Navigate**：根据场景选择是否启用 subQueryToGroupJoin
+1. **Prioritize implicit features**: Reduce manual SQL writing, improve development efficiency
+2. **Use implicit grouping for large data**: Avoid multiple subqueries
+3. **Understand generated SQL**: Check SQL correctness through logs
+4. **Configure @Navigate reasonably**: Choose whether to enable subQueryToGroupJoin based on scenario

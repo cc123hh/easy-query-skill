@@ -1,20 +1,23 @@
 ---
 name: easy-query-expert
-description: This skill should be used when the user asks to "use Easy-Query", "write an Easy-Query query", "@EntityProxy annotation", "Easy-Query join query", "Easy-Query tracking update", "Easy-Query pagination", or mentions "proxy class generation", "implicit join", "implicit subquery", "entity navigation". Provides comprehensive guidance for the Easy-Query ORM framework including type-safe Lambda queries, implicit relationships, tracking updates, and proxy pattern usage.
+description: Expert guidance for Easy-Query ORM (Java), covering type-safe proxy queries, implicit joins, and tracking updates.
 version: 1.0.0
+author: cc123hh
+tags: [java, orm, database, easy-query, sql, backend, proxy, type-safe, lambda]
+repository: https://github.com/dromara/easy-query
 ---
 
 # Easy-Query ORM Expert
 
-Easy-Query 是一个基于 APT 代理模式的 Java ORM 框架，提供类型安全的 Lambda 查询语法。此 Skill 涵盖核心概念、常见操作、关系映射和高级特性。
+Easy-Query is a Java ORM framework based on APT proxy pattern, providing type-safe Lambda query syntax. This skill covers core concepts, common operations, relationship mapping, and advanced features.
 
-## 核心概念
+## Core Concepts
 
-### 代理模式
+### Proxy Pattern
 
-Easy-Query 使用 APT（Annotation Processing Tool）在编译时生成代理类，实现类型安全的查询语法。
+Easy-Query uses APT (Annotation Processing Tool) to generate proxy classes at compile time, enabling type-safe query syntax.
 
-**实体代理** (`@EntityProxy`)：
+**Entity Proxy** (`@EntityProxy`):
 ```java
 @Table("t_blog")
 @EntityProxy
@@ -24,7 +27,7 @@ public class BlogEntity implements ProxyEntityAvailable<BlogEntity, BlogEntityPr
 }
 ```
 
-**VO 代理** (`@EntityFileProxy`)：
+**VO Proxy** (`@EntityFileProxy`):
 ```java
 @EntityFileProxy
 public class BlogVO {
@@ -33,70 +36,70 @@ public class BlogVO {
 }
 ```
 
-### 代理类生成要求
+### Proxy Class Generation Requirements
 
-使用 `@EntityProxy` 或 `@EntityFileProxy` 注解后，**必须先编译项目**生成代理类：
+After using `@EntityProxy` or `@EntityFileProxy` annotations, **you must compile the project first** to generate proxy classes:
 ```bash
 mvn clean compile
 ```
 
-生成的代理类位于：`target/generated-sources/annotations/`
+Generated proxy classes are located at: `target/generated-sources/annotations/`
 
-### Lambda 字段引用
+### Lambda Field References
 
-查询时必须使用代理对象的 Lambda 表达式访问字段：
+When querying, you must use Lambda expressions with proxy objects to access fields:
 ```java
-// ✅ 正确：使用 Lambda 表达式
+// ✅ Correct: Using Lambda expression
 easyEntityQuery.queryable(BlogEntity.class)
     .where(b -> b.title().like("Spring%"))
     .toList();
 
-// ❌ 错误：直接使用 getter 方法
+// ❌ Incorrect: Directly using getter method
 easyEntityQuery.queryable(BlogEntity.class)
-    .where(b -> b.getTitle().like("Spring%")) // 编译错误
+    .where(b -> b.getTitle().like("Spring%")) // Compilation error
 ```
 
-## 快速参考
+## Quick Reference
 
-### CRUD 操作速查
+### CRUD Operations Cheat Sheet
 
-| 操作 | 方法 | 示例 |
-|------|------|------|
-| 查询单条 | `firstOrNull()` | `.where(b -> b.id().eq("123")).firstOrNull()` |
-| 查询列表 | `toList()` | `.where(b -> b.score().gt(3.0)).toList()` |
-| 插入 | `insertable()` | `easyEntityQuery.insertable(entity).executeRows()` |
-| 表达式更新 | `updatable().setColumns()` | `.setColumns(b -> b.title().set("新标题"))` |
-| 实体更新 | `updatable(entity)` | `easyEntityQuery.updatable(entity).executeRows()` |
-| 删除 | `deletable()` | `.where(b -> b.score().lt(1.0)).executeRows()` |
+| Operation | Method | Example |
+|-----------|--------|---------|
+| Query Single | `firstOrNull()` | `.where(b -> b.id().eq("123")).firstOrNull()` |
+| Query List | `toList()` | `.where(b -> b.score().gt(3.0)).toList()` |
+| Insert | `insertable()` | `easyEntityQuery.insertable(entity).executeRows()` |
+| Expression Update | `updatable().setColumns()` | `.setColumns(b -> b.title().set("New Title"))` |
+| Entity Update | `updatable(entity)` | `easyEntityQuery.updatable(entity).executeRows()` |
+| Delete | `deletable()` | `.where(b -> b.score().lt(1.0)).executeRows()` |
 
-### Join 操作速查
+### Join Operations Cheat Sheet
 
-| 类型 | 方法 | 场景 |
-|------|------|------|
-| Left Join | `.leftJoin(Class, (a,b) -> condition)` | 保留左表所有数据 |
-| Inner Join | `.innerJoin(Class, (a,b) -> condition)` | 只返回匹配数据 |
-| Right Join | `.rightJoin(Class, (a,b) -> condition)` | 保留右表所有数据 |
+| Type | Method | Use Case |
+|------|--------|----------|
+| Left Join | `.leftJoin(Class, (a,b) -> condition)` | Keep all left table data |
+| Inner Join | `.innerJoin(Class, (a,b) -> condition)` | Return only matched data |
+| Right Join | `.rightJoin(Class, (a,b) -> condition)` | Keep all right table data |
 
-### 关系类型速查
+### Relationship Types Cheat Sheet
 
-| 注解值 | 关系类型 | 示例 |
-|--------|---------|------|
-| `OneToOne` | 一对一 | 用户 ↔ 个人资料 |
-| `OneToMany` | 一对多 | 主题 → 多篇博客 |
-| `ManyToOne` | 多对一 | 博客 → 所属主题 |
-| `ManyToMany` | 多对多 | 学生 ↔ 课程 |
+| Annotation Value | Relationship Type | Example |
+|------------------|-------------------|---------|
+| `OneToOne` | One-to-One | User ↔ Profile |
+| `OneToMany` | One-to-Many | Topic → Multiple Blogs |
+| `ManyToOne` | Many-to-One | Blog →所属 Topic |
+| `ManyToMany` | Many-to-Many | Student ↔ Course |
 
-## 常见操作模式
+## Common Operation Patterns
 
-### 基础查询
+### Basic Queries
 
 ```java
-// 单条查询
+// Single record query
 BlogEntity blog = easyEntityQuery.queryable(BlogEntity.class)
     .where(b -> b.id().eq("123"))
     .firstOrNull();
 
-// 多条件查询
+// Multi-condition query
 List<BlogEntity> blogs = easyEntityQuery.queryable(BlogEntity.class)
     .where(b -> {
         b.title().like("Easy%");
@@ -106,7 +109,7 @@ List<BlogEntity> blogs = easyEntityQuery.queryable(BlogEntity.class)
     .toList();
 ```
 
-### 多表 Join
+### Multi-Table Join
 
 ```java
 // Left Join
@@ -119,7 +122,7 @@ easyEntityQuery.queryable(Topic.class)
     .toList();
 ```
 
-### 差异化更新
+### Differential Update
 
 ```java
 TrackManager trackManager = easyEntityQuery.getRuntimeContext().getTrackManager();
@@ -135,7 +138,7 @@ try {
 }
 ```
 
-### 分页查询
+### Pagination Query
 
 ```java
 EasyPageResult<BlogEntity> pageResult = easyEntityQuery.queryable(BlogEntity.class)
@@ -147,17 +150,17 @@ long total = pageResult.getTotalCount();
 List<BlogEntity> list = pageResult.getList();
 ```
 
-### VO 查询映射
+### VO Query Mapping
 
 ```java
-// 定义 VO
+// Define VO
 @EntityFileProxy
 public class BlogVO {
     private String title;
     private BigDecimal avgScore;
 }
 
-// 使用 VO 接收结果
+// Use VO to receive results
 List<BlogVO> vos = easyEntityQuery.queryable(BlogEntity.class)
     .groupBy(b -> b.category())
     .select(g -> new BlogVOProxy()
@@ -167,53 +170,53 @@ List<BlogVO> vos = easyEntityQuery.queryable(BlogEntity.class)
     .toList();
 ```
 
-## 关系映射配置
+## Relationship Mapping Configuration
 
-使用 `@Navigate` 注解定义实体间关系：
+Use `@Navigate` annotation to define relationships between entities:
 
 ```java
-// 一对多
+// One-to-Many
 @Navigate(value = RelationTypeEnum.OneToMany,
           selfProperty = "id",
           targetProperty = "topicId")
 private List<BlogEntity> blogs;
 
-// 多对一
+// Many-to-One
 @Navigate(value = RelationTypeEnum.ManyToOne,
           selfProperty = "topicId",
           targetProperty = "id")
 private Topic topic;
 
-// 一对一
+// One-to-One
 @Navigate(value = RelationTypeEnum.OneToOne,
           selfProperty = "id",
           targetProperty = "userId")
 private UserProfile profile;
 ```
 
-## 高级特性概览
+## Advanced Features Overview
 
-### 隐式 Join（Implicit Join）
+### Implicit Join
 
-自动处理 OneToOne/ManyToOne 关系，无需显式 join：
+Automatically handles OneToOne/ManyToOne relationships without explicit join:
 ```java
-// 自动生成 LEFT JOIN
+// Automatically generates LEFT JOIN
 easyEntityQuery.queryable(SysUser.class)
-    .where(u -> u.company().name().like("阿里"))
+    .where(u -> u.company().name().like("Alibaba"))
     .toList();
 ```
 
-### 隐式子查询（Implicit Subquery）
+### Implicit Subquery
 
-自动处理 OneToMany/ManyToMany 关系：
+Automatically handles OneToMany/ManyToMany relationships:
 ```java
-// 自动生成 EXISTS 子查询
+// Automatically generates EXISTS subquery
 easyEntityQuery.queryable(Company.class)
-    .where(c -> c.users().any(u -> u.name().like("小明")))
+    .where(c -> c.users().any(u -> u.name().like("Xiaoming")))
     .toList();
 ```
 
-### 聚合查询
+### Aggregation Query
 
 ```java
 easyEntityQuery.queryable(BlogEntity.class)
@@ -227,31 +230,31 @@ easyEntityQuery.queryable(BlogEntity.class)
     .toList();
 ```
 
-## 常见问题速查
+## Common Issues Cheat Sheet
 
-| 问题 | 解决方案 |
-|------|---------|
-| 找不到 XXXProxy 类 | 执行 `mvn clean compile` 生成代理类 |
-| @Column 映射不生效 | VO 中需要使用相同的列名映射 |
-| 循环引用序列化问题 | 查询时使用 select 指定字段或添加 JSON 忽略注解 |
-| Join 查询性能慢 | 使用 `subQueryToGroupJoin = true` 优化 |
+| Issue | Solution |
+|-------|----------|
+| Cannot find XXXProxy class | Run `mvn clean compile` to generate proxy classes |
+| @Column mapping not working | VO needs to use the same column name mapping |
+| Circular reference serialization issues | Use select to specify fields when querying or add JSON ignore annotations |
+| Slow Join query performance | Optimize with `subQueryToGroupJoin = true` |
 
-## 完整资源
+## Complete Resources
 
-### 详细文档
+### Detailed Documentation
 
-- **`references/advanced-features.md`** - 五大隐式特性详解（Implicit Join/Subquery/Grouping/Partition/CASE WHEN）
-- **`references/relationship-mapping.md`** - @Navigate 注解完整配置和最佳实践
-- **`references/performance-optimization.md`** - 性能优化技巧和常见坑点
+- **`references/advanced-features.md`** - Five implicit features explained in detail (Implicit Join/Subquery/Grouping/Partition/CASE WHEN)
+- **`references/relationship-mapping.md`** - Complete @Navigate annotation configuration and best practices
+- **`references/performance-optimization.md`** - Performance optimization tips and common pitfalls
 
-### 工作示例
+### Working Examples
 
-- **`examples/BlogEntity.java`** - 完整的实体类示例
-- **`examples/QueryExamples.java`** - 各种查询操作示例
-- **`examples/JoinExamples.java`** - 多表 Join 示例
-- **`examples/TrackingUpdateExample.java`** - 差异化更新完整示例
+- **`examples/BlogEntity.java`** - Complete entity class example
+- **`examples/QueryExamples.java`** - Various query operation examples
+- **`examples/JoinExamples.java`** - Multi-table Join examples
+- **`examples/TrackingUpdateExample.java`** - Complete differential update example
 
-## 核心注解位置
+## Core Annotation Locations
 
 - `@EntityProxy` / `@EntityFileProxy`: `sql-core/src/main/java/com/easy/query/core/annotation/`
 - `@Table` / `@Column`: `sql-core/src/main/java/com/easy/query/core/annotation/`
