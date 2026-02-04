@@ -2,6 +2,8 @@
 
 Easy-Query ORM 框架专家 Skill，提供类型安全的 Lambda 查询、隐式关联、差异化更新等功能的专业指导。
 
+[English](README_EN.md) | 简体中文
+
 ## Skill 结构
 
 ```

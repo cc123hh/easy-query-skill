@@ -2,6 +2,8 @@
 
 An expert skill for the Easy-Query ORM framework, providing professional guidance on type-safe Lambda queries, implicit relationships, differential updates, and more.
 
+English | [简体中文](README.md)
+
 ## Skill Structure
 
 ```
